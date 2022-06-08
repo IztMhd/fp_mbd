@@ -192,3 +192,26 @@ start with 11
 owned by pembaruan_item.id_pembaruan;
 
 
+================================
+--Item Game yang paling banyak dibeli
+SELECT Game.nama_game
+FROM
+	Game INNER JOIN (
+		SELECT id_game
+		FROM item
+		GROUP BY(id_game)
+		ORDER BY COUNT(id_game) DESC
+		LIMIT 1
+	) AS Most_Order
+	ON game.id_game=Most_Order.id_game
+
+-- Banyak pesanan tiap pembeli
+SELECT Pembeli.nama_pembeli, Ngroup.banyak_belian
+FROM
+	Pembeli INNER JOIN (
+		SELECT id_pembeli , COUNT(id_pembeli) AS banyak_belian
+		FROM Pesanan
+		GROUP BY id_Pembeli
+	) AS Ngroup
+	ON Pembeli.id_pembeli=Ngroup.id_pembeli
+ORDER BY Ngroup.banyak_belian

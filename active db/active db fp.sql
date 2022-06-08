@@ -155,21 +155,25 @@ FROM
 	ON Pembeli.id_pembeli=Ngroup.id_pembeli
 ORDER BY Ngroup.banyak_belian
 
+--rata rata pembelian item dota di tahun 2022
+select avg(s.total_pembayaran) as rata_rata
+from pesanan s, item i
+where s.id_item = i.id_item 
+and i.id_game in (
+	select i.id_game
+	from item i, pesanan s
+	where i.id_game = 2
+	and s.id_pesanan in (
+		select id_pesanan
+		from pesanan
+		where extract(year from tanggal_pesanan) = '2022'
+	)
+);
+
 
 
 
 --========nested================
-
---banyaknya pesanan berhasil di tahun ini dengan pembayaran saldo
-select count(p.status_pesanan) as jumlah
-from pesanan p
-where p.status_pesanan = 'Berhasil' 
-and p.id_pembeli in (
-	select id_pembeli
-	from pesanan
-	where extract(year from tanggal_pesanan) = 2022
-	and metode_pembayaran = 'saldo'
-);
 
 --total item valorant yang dibeli--
 select count(pesanan.id_item) as jumlah
@@ -183,6 +187,18 @@ where pesanan.id_item in (
   where item.id_game = 2
  )
 );
+
+--banyaknya pesanan berhasil di tahun ini dengan pembayaran saldo
+select count(p.status_pesanan) as jumlah
+from pesanan p
+where p.status_pesanan = 'Berhasil' 
+and p.id_pembeli in (
+	select id_pembeli
+	from pesanan
+	where extract(year from tanggal_pesanan) = 2022
+	and metode_pembayaran = 'saldo'
+);
+
 
 --pembeli yg paling banyak beli
 select pembeli.nama_pembeli

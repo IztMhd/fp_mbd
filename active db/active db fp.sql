@@ -77,8 +77,8 @@ begin
 end;
 $$;
 
-create trigger updateStock 
-after insert on pesanan 
+create or replace trigger updateStock 
+after insert or update on pesanan 
 for each row 
 execute procedure updateStock();
 
@@ -103,6 +103,8 @@ create or replace trigger item_insert
 after insert or update or delete on item
 for each row 
 execute procedure itemInsert();
+
+UPDATE item SET stock_item = 100 WHERE id_item = 2;
 
 
 --======================view============================

@@ -107,6 +107,10 @@ execute procedure itemInsert();
 UPDATE item SET stock_item = 100 WHERE id_item = 2;
 
 
+--======================complex============================
+
+
+
 --======================view============================
 create view report as
 select pembeli.nama_pembeli, pesanan.status_pesanan, pesanan.tanggal_pesanan, pesanan.id_akun_game, item.nama_item, pesanan.metode_pembayaran, pesanan.total_pembayaran
@@ -132,6 +136,19 @@ having pesanan.id_item = 1;
 
 
 --========nested================
+
+--total item valorant yang dibeli--
+select count(pesanan.id_item) as jumlah
+from pesanan
+where pesanan.id_item in (
+ select item.id_item
+ from item
+ where item.id_game in (
+  select id_game
+  from game
+  where item.id_game = 2
+ )
+);
 
 --pembeli yg paling banyak beli
 select pembeli.nama_pembeli

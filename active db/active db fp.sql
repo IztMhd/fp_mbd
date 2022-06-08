@@ -1,5 +1,5 @@
-==ganti status proses -> berhasil
-=====================procedure=================
+--ganti status proses -> berhasil
+--====================procedure=================
 create procedure chstat()
 language 'plpgsql'
 as $$
@@ -14,16 +14,17 @@ call chstat();
 
 
 
-==update saldo saat melakukan pesanan
-=====================trigger====================
-create function updateSaldo()
+
+--===================trigger====================
+--update saldo saat melakukan pesanan
+create or replace function updateSaldo()
 returns trigger
 language 'plpgsql'
 as $$
 begin
       update pembeli
       set saldo = saldo - tuku.bayar
-      from (select total_pembayaran as bayar
+      from (select new.total_pembayaran as bayar
            	from pesanan
             where id_pembeli = new.id_pembeli) as tuku
 	  where id_pembeli = new.id_pembeli;
@@ -36,15 +37,38 @@ after insert on pesanan
 for each row 
 execute procedure updateSaldo();
 
-===============================================
+--nolak kalo kureng
+create or replace function cek_pesanan()
+returns trigger 
+language 'plpgsql'
+as $$
+declare 
+	idPembeli int;
+	saldoP int;
+BEGIN
+	select new.id_pembeli into idPembeli;
+	select saldo into saldoP from pembeli where id_pembeli = idPembeli;
+	if new.total_pembayaran > saldoP  and new.metode_pembayaran = 'saldo' then
+		raise exception 'saldo anda kureng';
+		end if;
+     return new;
+END;
+$$;
 
+create trigger validateInsert 
+before insert on pesanan 
+for each row 
+execute procedure cek_pesanan();
+
+
+--update stok kl ada yang beli
 create or replace function updateStock()
 returns trigger
 language 'plpgsql'
 as $$
 begin
       update item
-      set stock = stock - 1
+      set stock_item = stock_item - 1
       from (select status_pesanan
            	from pesanan
             where status_pesanan = 'Berhasil') as beli
@@ -58,17 +82,19 @@ after insert on pesanan
 for each row 
 execute procedure updateStock();
 
-============================================
 
+--insert pembaruan
 create or replace function itemInsert()
 returns trigger
 language 'plpgsql'
 as $$
 begin
+	if old.stock_item < new.stock_item then
 	insert into pembaruan_item
 		(id_pembaruan, tanggal_pembaruan, id_admin, id_item)
 	values
 		(nextval('pembaruanseq'), now(), 1, new.id_item);
+	end if;
 	return null;
 end;
 $$;
@@ -79,7 +105,7 @@ for each row
 execute procedure itemInsert();
 
 
-========================view============================
+--======================view============================
 create view report as
 select pembeli.nama_pembeli, pesanan.status_pesanan, pesanan.tanggal_pesanan, pesanan.id_akun_game, item.nama_item, pesanan.metode_pembayaran, pesanan.total_pembayaran
 from pesanan
@@ -90,16 +116,9 @@ on pesanan.id_pembeli = pembeli.id_pembeli;
 
 
 
-=================agregate======================
+--===============agregate======================
 
-total item valorant yang dibeli
-======================
-select count(pesanan.id_pembeli) as jumlah
-from pesanan
-where pesanan.id_item = 1;
-
-banyaknya item yang dibeli pada game valorant
-=======================
+--banyaknya item yang dibeli pada game valorant
 select item.nama_item, count(pesanan.id_item) as jumlah
 from pesanan
 left join item
@@ -110,10 +129,9 @@ having pesanan.id_item = 1;
 
 
 
-==========nested================
+--========nested================
 
-==yg paling banyak beli
-==========================
+--pembeli yg paling banyak beli
 select pembeli.nama_pembeli
 from pembeli
 where pembeli.id_pembeli in (
@@ -126,8 +144,7 @@ where pembeli.id_pembeli in (
 );
 
 
-==yang beli game valorant
-===================
+--yang beli item yg dimaksudkan
 select pembeli.nama_pembeli
 from pembeli
 where pembeli.id_pembeli in (
@@ -137,8 +154,7 @@ where pembeli.id_pembeli in (
 );
 
 
-==Menampilkan nama, dan tanggal pesanan yang melakukan pembelian pada bulan Oktober
-===================
+--Menampilkan nama, dan tanggal pesanan yang melakukan pembelian pada bulan Oktober
 select p.nama_pembeli,  s.tanggal_pesanan
 from pembeli p, pesanan s
 where p.id_pembeli = s.id_pembeli and p.id_pembeli in (select id_pembeli
@@ -146,9 +162,8 @@ where p.id_pembeli = s.id_pembeli and p.id_pembeli in (select id_pembeli
 						       where EXTRACT(MONTH FROM tanggal_pesanan) = 10);
 													  
 													  
-													  
-													  
-=====================sequence=================
+																					  
+--===================sequence=================
 create sequence pembeliseq
 increment by 1
 minvalue 1
@@ -192,7 +207,7 @@ start with 11
 owned by pembaruan_item.id_pembaruan;
 
 
-================================
+
 --Item Game yang paling banyak dibeli
 SELECT Game.nama_game
 FROM

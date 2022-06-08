@@ -137,8 +137,17 @@ where pembeli.id_pembeli in (
 );
 
 
-
-
+==Menampilkan nama, dan tanggal pesanan yang melakukan pembelian pada bulan Oktober
+===================
+select p.nama_pembeli,  s.tanggal_pesanan
+from pembeli p, pesanan s
+where p.id_pembeli = s.id_pembeli and p.id_pembeli in (select id_pembeli
+						       from pesanan
+						       where EXTRACT(MONTH FROM tanggal_pesanan) = 10);
+													  
+													  
+													  
+													  
 =====================sequence=================
 create sequence pembeliseq
 increment by 1

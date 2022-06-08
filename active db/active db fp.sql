@@ -137,6 +137,17 @@ having pesanan.id_item = 1;
 
 --========nested================
 
+--banyaknya pesanan berhasil di tahun ini dengan pembayaran saldo
+select count(p.status_pesanan) as jumlah
+from pesanan p
+where p.status_pesanan = 'Berhasil' 
+and p.id_pembeli in (
+	select id_pembeli
+	from pesanan
+	where extract(year from tanggal_pesanan) = 2022
+	and metode_pembayaran = 'saldo'
+);
+
 --total item valorant yang dibeli--
 select count(pesanan.id_item) as jumlah
 from pesanan

@@ -120,6 +120,29 @@ on pesanan.id_item = item.id_item
 left join pembeli
 on pesanan.id_pembeli = pembeli.id_pembeli;
 
+--pembeli yg paling banyak beli
+create view pembeli_max as
+select pembeli.nama_pembeli
+from pembeli
+where pembeli.id_pembeli in (
+	select pesanan.id_pembeli
+	from pesanan
+	group by pesanan.id_pembeli
+	having count(*) >= all( select count(id_pembeli) 
+					from pesanan p
+					group by p.id_pembeli)
+);
+
+--yang beli item yg dimaksudkan
+select pembeli.nama_pembeli
+create view itemx as
+from pembeli
+where pembeli.id_pembeli in (
+	select pesanan.id_pembeli
+	from pesanan
+	where pesanan.id_item = 1
+);
+
 
 
 --===============agregate======================
@@ -199,28 +222,6 @@ and p.id_pembeli in (
 	and metode_pembayaran = 'saldo'
 );
 
-
---pembeli yg paling banyak beli
-select pembeli.nama_pembeli
-from pembeli
-where pembeli.id_pembeli in (
-	select pesanan.id_pembeli
-	from pesanan
-	group by pesanan.id_pembeli
-	having count(*) >= all( select count(id_pembeli) 
-					from pesanan p
-					group by p.id_pembeli)
-);
-
-
---yang beli item yg dimaksudkan
-select pembeli.nama_pembeli
-from pembeli
-where pembeli.id_pembeli in (
-	select pesanan.id_pembeli
-	from pesanan
-	where pesanan.id_item = 1
-);
 
 
 --Menampilkan nama, dan tanggal pesanan yang melakukan pembelian pada bulan Oktober

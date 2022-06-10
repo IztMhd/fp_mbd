@@ -22,12 +22,14 @@ returns trigger
 language 'plpgsql'
 as $$
 begin
+	 if new.metode_pembayaran = 'saldo' then
       update pembeli
       set saldo = saldo - tuku.bayar
       from (select new.total_pembayaran as bayar
            	from pesanan
             where id_pembeli = new.id_pembeli) as tuku
 	  where id_pembeli = new.id_pembeli;
+	 end if;
       return null;
 end;
 $$;
@@ -67,12 +69,14 @@ returns trigger
 language 'plpgsql'
 as $$
 begin
+	 if new.status_pesanan = 'Berhasil' then
       update item
       set stock_item = stock_item - 1
       from (select status_pesanan
            	from pesanan
             where status_pesanan = 'Berhasil') as beli
 	where id_item = new.id_item;
+	end if;
       return null;
 end;
 $$;
@@ -89,7 +93,7 @@ returns trigger
 language 'plpgsql'
 as $$
 begin
-	if old.stock_item < new.stock_item then
+	if old.stock_item < new.stock_item or old.harga_item <> new.harga_item then
 	insert into pembaruan_item
 		(id_pembaruan, tanggal_pembaruan, id_admin, id_item)
 	values
@@ -118,7 +122,8 @@ from pesanan
 left join item
 on pesanan.id_item = item.id_item
 left join pembeli
-on pesanan.id_pembeli = pembeli.id_pembeli;
+on pesanan.id_pembeli = pembeli.id_pembeli
+order by tanggal_pesanan asc;
 
 --pembeli yg paling banyak beli
 create view pembeli_max as
@@ -134,15 +139,14 @@ where pembeli.id_pembeli in (
 );
 
 --yang beli item yg dimaksudkan
-select pembeli.nama_pembeli
 create view itemx as
+select pembeli.nama_pembeli
 from pembeli
 where pembeli.id_pembeli in (
 	select pesanan.id_pembeli
 	from pesanan
 	where pesanan.id_item = 1
 );
-
 
 
 --===============agregate======================
